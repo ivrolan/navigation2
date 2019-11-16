@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "nav2_lifecycle_manager/lifecycle_manager_client.hpp"
 #include "nav2_msgs/action/navigate_to_pose.hpp"
@@ -59,6 +60,8 @@ private Q_SLOTS:
   void onCancel();
   void onPause();
   void onResume();
+  void onAccumulated();
+  void onAccumulating();
   void onNewGoal(double x, double y, double theta, QString frame);
 
 private:
@@ -88,6 +91,7 @@ private:
 
   QPushButton * start_reset_button_{nullptr};
   QPushButton * pause_resume_button_{nullptr};
+  QPushButton * navigation_mode_button_{nullptr};
 
   QStateMachine state_machine_;
   InitialThread * initial_thread_;
@@ -104,6 +108,12 @@ private:
   // and the button state to change automatically.
   QState * running_{nullptr};
   QState * canceled_{nullptr};
+  // The following states are added to allow to collect several poses to perform a waypoint-mode
+  // navigation
+  QState * accumulating_{nullptr};
+  QState * accumulated_{nullptr};
+
+  std::vector<geometry_msgs::msg::PoseStamped> poses_acummulated_;
 };
 
 class InitialThread : public QThread
