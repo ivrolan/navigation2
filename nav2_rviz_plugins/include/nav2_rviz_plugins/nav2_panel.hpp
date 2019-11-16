@@ -29,6 +29,7 @@
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "rviz_common/panel.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "visualization_msgs/msg/marker_array.hpp"
 #include "nav2_util/geometry_utils.hpp"
 
 class QPushButton;
@@ -60,6 +61,7 @@ private Q_SLOTS:
   void onCancel();
   void onPause();
   void onResume();
+  void onIdle();
   void onAccumulated();
   void onAccumulating();
   void onNewGoal(double x, double y, double theta, QString frame);
@@ -72,6 +74,9 @@ private:
   // Call to send NavigateToPose action request for goal pose
   void startNavigation(geometry_msgs::msg::PoseStamped pose);
   using GoalHandle = rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>;
+
+  // Publish the visual markers with the waypoints
+  void updateWpNavigationMarkers();
 
   // The (non-spinning) client node used to invoke the action client
   rclcpp::Node::SharedPtr client_node_;
@@ -88,6 +93,9 @@ private:
 
   // The client used to control the nav2 stack
   nav2_lifecycle_manager::LifecycleManagerClient client_;
+
+  // Waypoint navigation visual markers publisher
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr wp_navigation_markers_pub_;
 
   QPushButton * start_reset_button_{nullptr};
   QPushButton * pause_resume_button_{nullptr};
