@@ -100,35 +100,69 @@ void
 CarrotController::setPlan(const nav_msgs::msg::Path & path)
 {
   if ((node_->now() - goal_point_.header.stamp).seconds() < goal_point_valid_duration_) {
+    std::cerr << "===============================================" << std::endl;
+
+    const std::string working_frame = "odom"; 
+
+    nav_2d_msgs::msg::Pose2DStamped start_pose;
+    start_pose.header.frame_id = costmap_ros_->getBaseFrameID();
+    start_pose.header.stamp = goal_point_.header.stamp;
+    start_pose.pose.x = 0;
+    start_pose.pose.y = 0;
+    start_pose.pose.theta = 0;
+
+    nav_2d_utils::transformPose(
+      tf_, working_frame, start_pose,
+      start_pose, transform_tolerance_);
+
+    std::cerr << "Going from [" << working_frame << "] ("<< start_pose.pose.x << ", " << start_pose.pose.y << ")" << std::endl;
+
     nav_2d_msgs::msg::Pose2DStamped goal_pose;
-    
+
     goal_pose.header = goal_point_.header;
     goal_pose.pose.x = goal_point_.point.x;
     goal_pose.pose.y = goal_point_.point.y;
     goal_pose.pose.theta = 0.0;  // it doesn't really matter
 
+    std::cerr << "Going to [" << goal_pose.header.frame_id << "] ("<< goal_pose.pose.x << ", " << goal_pose.pose.y << ")" << std::endl;
+
     nav_2d_utils::transformPose(
-      tf_, costmap_ros_->getBaseFrameID(), goal_pose,
+      tf_, working_frame, goal_pose,
       goal_pose, transform_tolerance_);
 
-    double distance_to_goal = std::hypot(goal_pose.pose.x, goal_pose.pose.y);
+    std::cerr << "Going to [" << working_frame << "] ("<< goal_pose.pose.x << ", " << goal_pose.pose.y << ")" << std::endl;
+
+
+    double distance_to_goal = std::hypot(goal_pose.pose.x - start_pose.pose.x, goal_pose.pose.y - start_pose.pose.y);
+
+    std::cerr << "Distance: " << distance_to_goal << std::endl;
 
     if (distance_to_goal > 0.0) 
     {
-      double dx = goal_pose.pose.x / distance_to_goal;
-      double dy = goal_pose.pose.y / distance_to_goal;
+      double dx = (goal_pose.pose.x - start_pose.pose.x) / distance_to_goal;
+      double dy = (goal_pose.pose.y - start_pose.pose.y) / distance_to_goal;
       double angle = atan2(dy, dx);
+
+      std::cerr << "uv = (" << dx << ", " << dy<< ") " << std::endl;
+
+      // Apply carrot_distance to goal
+      goal_pose.pose.x = goal_pose.pose.x - std::min(carrot_distance_, distance_to_goal) * dx;
+      goal_pose.pose.y = goal_pose.pose.y - std::min(carrot_distance_, distance_to_goal) * dy;
+
+      dx = (goal_pose.pose.x - start_pose.pose.x) / distance_to_goal;
+      dy = (goal_pose.pose.y - start_pose.pose.y) / distance_to_goal;
+      angle = atan2(dy, dx);
 
       nav_msgs::msg::Path new_path;
       new_path.header.stamp = node_->now();
-      new_path.header.frame_id = costmap_ros_->getBaseFrameID();
+      new_path.header.frame_id = working_frame;
       
       tf2::Quaternion q;
       q.setRPY(0.0, 0.0, angle);
 
       geometry_msgs::msg::PoseStamped aux_pose;
       aux_pose.header.stamp = node_->now();
-      aux_pose.header.frame_id = costmap_ros_->getBaseFrameID();
+      aux_pose.header.frame_id = working_frame;
       aux_pose.pose.position.z = 0.0;
       aux_pose.pose.orientation.x = q.x();
       aux_pose.pose.orientation.y = q.y();
@@ -137,16 +171,20 @@ CarrotController::setPlan(const nav_msgs::msg::Path & path)
 
 
       double acum_distance = 0.0;
+      double step_dist = distance_to_goal / 10.0;
       while (acum_distance < distance_to_goal) 
       {
-        double step_dist = 0.10;
         acum_distance = acum_distance + step_dist;
 
-        aux_pose.pose.position.x = acum_distance * dx * step_dist;
-        aux_pose.pose.position.y = acum_distance * dy * step_dist;
+        aux_pose.pose.position.x = start_pose.pose.x + acum_distance * dx * distance_to_goal;
+        aux_pose.pose.position.y = start_pose.pose.y + acum_distance * dy * distance_to_goal;
         
+        std::cerr << "Adding path point [" << working_frame << "] (" << aux_pose.pose.position.x << ", " << aux_pose.pose.position.y << ", " << angle << ") dist  = " << acum_distance<< " / " << distance_to_goal << std::endl;
+
         new_path.poses.push_back(aux_pose);
       }
+        std::cerr << "Setting plan of " << new_path.poses.size() << "Poses" <<std::endl;
+
       DWBLocalPlanner::setPlan(new_path);
     } else {
       RCLCPP_ERROR(node_->get_logger(), "Distance is zero when calculating path");
@@ -168,6 +206,9 @@ void
 CarrotController::onGoalPointReceived(const geometry_msgs::msg::PointStamped::SharedPtr point)
 {
   goal_point_ = *point;
+
+  // Temporal workaround until Rviz 8.0.0, as RViz2 is not using sim_time before this version
+  goal_point_.header.stamp = node_->now();
 }
 
 }  // namespace nav2_carrot_controller

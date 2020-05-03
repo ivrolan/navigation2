@@ -80,6 +80,7 @@ controller_server:
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
+    required_movement_radius: 0.0
 
     # DWB parameters
     FollowPath.debug_trajectory_details: True
@@ -119,6 +120,7 @@ controller_server:
     FollowPath.RotateToGoal.scale: 32.0
     FollowPath.RotateToGoal.slowing_factor: 5.0
     FollowPath.RotateToGoal.lookahead_time: -1.0
+    FollowPath.publish_local_plan: true
 
 controller_server_rclcpp_node:
   ros__parameters:
