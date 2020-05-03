@@ -234,7 +234,7 @@ void ControllerServer::computeControl()
       action_server_->terminate_current();
       return;
     }
-
+    
     setPlannerPath(action_server_->get_current_goal()->path);
     progress_checker_->reset();
 
