@@ -13,6 +13,7 @@ find_package(action_msgs REQUIRED)
 nav2_package()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/ContextInfo.msg"
   "msg/Costmap.msg"
   "msg/CostmapMetaData.msg"
   "msg/VoxelGrid.msg"

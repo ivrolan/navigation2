@@ -132,7 +132,33 @@ BtNavigator::on_configure(const rclcpp_lifecycle::State & /*state*/)
   // Get the BT filename to use from the node parameter
   get_parameter("default_bt_xml_filename", default_bt_xml_filename_);
 
+  context_sub_ = create_subscription<nav2_msgs::msg::ContextInfo>(
+    "context_update", 
+    rclcpp::SystemDefaultsQoS(),
+    std::bind(&BtNavigator::onContextReceived, this, std::placeholders::_1));
+
+  blackboard_->set<std::string>("current_context", "normal");
+
   return nav2_util::CallbackReturn::SUCCESS;
+}
+
+void
+BtNavigator::onContextReceived(const nav2_msgs::msg::ContextInfo::SharedPtr context)
+{
+  switch (context->context_state){
+    case nav2_msgs::msg::ContextInfo::NORMAL:
+      blackboard_->set<std::string>("current_context", "normal");
+      break;
+    case nav2_msgs::msg::ContextInfo::DYNAMIC:
+      blackboard_->set<std::string>("current_context", "dynamic");
+      break;  
+    case nav2_msgs::msg::ContextInfo::NARROW:
+      blackboard_->set<std::string>("current_context", "narrow");
+      break;
+    default:
+      RCLCPP_ERROR(get_logger(), "Unknow context state: %d", context->context_state);
+      break;
+  }
 }
 
 bool

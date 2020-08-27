@@ -14,7 +14,31 @@
           </RecoveryNode>
         </RateController>
         <RecoveryNode number_of_retries="1" name="FollowPath">
-          <FollowPath path="{path}" controller_id="FollowPath"/>
+          
+          <PipelineSequence name="Context">
+            <ReactiveFallback name="FollowPath">
+              <Inverter>
+                <IsSpecifiedContext context="normal"/>
+              </Inverter>
+              <FollowPath path="{path}" controller_id="FollowPath"/>
+            </ReactiveFallback>
+
+            <ReactiveFallback name="DynamicFollowPath">
+              <Inverter>
+                <IsSpecifiedContext context="dynamic"/>
+              </Inverter>
+              <FollowPath path="{path}" controller_id="DynamicFollowPath"/>
+            </ReactiveFallback>
+
+            <ReactiveFallback name="DynamicFollowPath">
+              <Inverter>
+                <IsSpecifiedContext context="narrow"/>
+              </Inverter>
+              <FollowPath path="{path}" controller_id="DynamicFollowPath"/>
+            </ReactiveFallback>
+
+          </PipelineSequence>
+
           <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
         </RecoveryNode>
       </PipelineSequence>

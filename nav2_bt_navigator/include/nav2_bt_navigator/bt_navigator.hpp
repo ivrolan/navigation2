@@ -24,6 +24,7 @@
 #include "nav2_util/lifecycle_node.hpp"
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 #include "nav_msgs/msg/path.hpp"
+#include "nav2_msgs/msg/context_info.hpp"
 #include "nav2_util/simple_action_server.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "tf2_ros/transform_listener.h"
@@ -145,6 +146,9 @@ protected:
   std::string robot_frame_;
   std::string global_frame_;
   double transform_tolerance_;
+
+  rclcpp::Subscription<nav2_msgs::msg::ContextInfo>::SharedPtr context_sub_;
+  void onContextReceived(const nav2_msgs::msg::ContextInfo::SharedPtr pose);
 };
 
 }  // namespace nav2_bt_navigator

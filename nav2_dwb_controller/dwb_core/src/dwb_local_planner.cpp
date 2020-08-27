@@ -315,6 +315,8 @@ DWBLocalPlanner::computeVelocityCommands(
   const nav_2d_msgs::msg::Twist2D & velocity,
   std::shared_ptr<dwb_msgs::msg::LocalPlanEvaluation> & results)
 {
+  std::cerr << "DWB ================ " << std::endl;
+
   if (results) {
     results->header.frame_id = pose.header.frame_id;
     results->header.stamp = node_->now();
