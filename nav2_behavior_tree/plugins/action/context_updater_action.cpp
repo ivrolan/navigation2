@@ -1,4 +1,5 @@
-// Copyright (c) 2020 Aitor Miguel Blanco
+// Copyright (c) 2018 Intel Corporation
+// Copyright (c) 2020 Francisco Martin Rico
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,30 +14,38 @@
 // limitations under the License.
 
 #include <string>
+#include <memory>
+#include <limits>
 
-#include "nav2_behavior_tree/plugins/condition/is_specified_context_condition.hpp"
+#include "nav_msgs/msg/path.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "nav2_util/geometry_utils.hpp"
+#include "behaviortree_cpp_v3/decorator_node.h"
+
+#include "nav2_behavior_tree/plugins/action/context_updater_action.hpp"
 
 namespace nav2_behavior_tree
 {
 
-IsSpecifiedContext::IsSpecifiedContext(
-  const std::string & condition_name,
+ContextUpdater::ContextUpdater(
+  const std::string & name,
   const BT::NodeConfiguration & conf)
-: BT::ConditionNode(condition_name, conf)
+: BT::ActionNodeBase(name, conf)
 {
 }
 
-BT::NodeStatus IsSpecifiedContext::tick()
+inline BT::NodeStatus ContextUpdater::tick()
 {
-  std::string test_context;
-  getInput("context", test_context);
-
+  setStatus(BT::NodeStatus::RUNNING);
   auto current_context = config().blackboard->get<std::string>("current_context");
-  if (current_context == test_context) {
-    return BT::NodeStatus::SUCCESS;
+
+  if (current_context == "normal") {
+    setOutput("controller", "FollowPath");
   } else {
-    return BT::NodeStatus::FAILURE;
+    setOutput("controller", "DynamicFollowPath");
   }
+
+  return BT::NodeStatus::SUCCESS;
 }
 
 }  // namespace nav2_behavior_tree
@@ -44,5 +53,5 @@ BT::NodeStatus IsSpecifiedContext::tick()
 #include "behaviortree_cpp_v3/bt_factory.h"
 BT_REGISTER_NODES(factory)
 {
-  factory.registerNodeType<nav2_behavior_tree::IsSpecifiedContext>("IsSpecifiedContext");
+  factory.registerNodeType<nav2_behavior_tree::ContextUpdater>("ContextUpdater");
 }

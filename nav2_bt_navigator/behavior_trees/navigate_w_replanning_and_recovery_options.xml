@@ -13,9 +13,16 @@
             <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/>
           </RecoveryNode>
         </RateController>
-        <ContextUpdater controller="{controller}"/>
-        <RecoveryNode number_of_retries="1" name="FollowPath"> 
-          <FollowPath path="{path}" controller_id="{controller}"/>
+        <RecoveryNode number_of_retries="1" name="FollowPath">
+          
+          <ReactiveFallback name="FollowPath">
+            <PipelineSequence name="Context">
+              <IsSpecifiedContext context="dynamic"/>
+              <FollowPath path="{path}" controller_id="DynamicFollowPath"/>
+            </PipelineSequence>
+            <FollowPath path="{path}" controller_id="FollowPath"/>
+          </ReactiveFallback>
+
           <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
         </RecoveryNode>
       </PipelineSequence>

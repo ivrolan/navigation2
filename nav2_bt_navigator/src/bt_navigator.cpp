@@ -145,20 +145,7 @@ BtNavigator::on_configure(const rclcpp_lifecycle::State & /*state*/)
 void
 BtNavigator::onContextReceived(const nav2_msgs::msg::ContextInfo::SharedPtr context)
 {
-  switch (context->context_state){
-    case nav2_msgs::msg::ContextInfo::NORMAL:
-      blackboard_->set<std::string>("current_context", "normal");
-      break;
-    case nav2_msgs::msg::ContextInfo::DYNAMIC:
-      blackboard_->set<std::string>("current_context", "dynamic");
-      break;  
-    case nav2_msgs::msg::ContextInfo::NARROW:
-      blackboard_->set<std::string>("current_context", "narrow");
-      break;
-    default:
-      RCLCPP_ERROR(get_logger(), "Unknow context state: %d", context->context_state);
-      break;
-  }
+  blackboard_->set<std::string>("current_context", context->context_state);
 }
 
 bool

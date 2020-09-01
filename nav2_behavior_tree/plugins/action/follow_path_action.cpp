@@ -30,6 +30,7 @@ FollowPathAction::FollowPathAction(
 
 void FollowPathAction::on_tick()
 {
+  std::cerr << "FollowPathAction::on_tick" << std::endl;
   getInput("path", goal_.path);
   getInput("controller_id", goal_.controller_id);
 }
